@@ -9,7 +9,7 @@ public class Main{
     private static EventManager manager;
     public static void main(String[] args) {
         manager = new EventManager();
-        JDABuilder builder = JDABuilder.createDefault("NzI3MTc2ODE2NjA3MTAxMDcw.XvoC0A.iTomhTLEbt2ai90KoUT8dpzaBYg");
+        JDABuilder builder = JDABuilder.createDefault("");
         builder.setActivity(Activity.watching("Deep learning videos"));
         builder.addEventListeners(manager);
         JDA bot = null;
@@ -21,11 +21,6 @@ public class Main{
         try {
             bot.awaitReady();
             manager.setUser(bot.getSelfUser());
-            System.out.println("Bot pret !");
-        } catch (InterruptedException e) {
-            //TODO: handle exception
-        }
-
-        System.out.println(bot.getGuilds());
+        } catch (InterruptedException e) {}
     }
 }
