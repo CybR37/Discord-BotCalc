@@ -1,0 +1,91 @@
+<project name="Zen l'initie" default="run" basedir="..">
+    <description>
+        Tasks file used for the project. Provides compile, run, test, build and clean targets.
+    </description>
+
+    <!-- Main locations of the project -->
+    <property name="src" location="src"/>
+    <property name="doc" location="docs"/>
+    <property name="build" location="builds"/>
+    <property name="classpath" location="class"/>
+    <property name="lib" location="libs"/>
+    <!-- The main class used for the manifest file -->
+    <property name="mainClass" value="Main"/>
+
+    <path id="classpath.test">
+        <pathelement location="${lib}/junit-4.13.jar"/>
+        <pathelement location="${lib}/hamcrest-core-1.3.jar"/>
+        <pathelement location="${classpath}"/>
+    </path>
+
+    <path id="classpath.jda">
+        <pathelement location="${lib}/JDA-4.2.0_168.jar"/>
+        <pathelement location="${classpath}"/>
+    </path>
+    
+    <target name="init"
+        description="Generate a timestamp and create the folders">
+    <!-- Creates a timestamp for proper naming of build files -->
+        <tstamp/>
+        <mkdir dir="${classpath}"/>
+        <mkdir dir="${doc}"/>
+        <mkdir dir="${build}"/>
+    </target>
+
+    <target name="compile" depends="init"
+        description="Compile files into the class folder">
+        <javac srcdir="${src}" excludes="**/Test*.java" destdir="${classpath}">
+            <classpath refid="classpath.jda"/>
+        </javac>
+    </target>
+
+    <target name="run" depends="compile"
+        description="Run the file after the compile target">
+        <java classname="${mainClass}" classpath="${classpath}" fork="true">
+            <classpath refid="classpath.jda"/>
+        </java>
+    </target>
+
+    <target name="compile-test" depends="init"
+        description="Compile files into the class folder using the junit jar">
+        <javac srcdir="${src}" destdir="${classpath}">
+            <!-- CLASSPATH + path to the junit and hamcrest jar files -->
+            <classpath refid="classpath.test"/>
+        </javac>
+    </target>
+
+    <target name="test" depends="compile-test"
+        description="Test the tests class">
+        <junit fork="yes" printsummary="on">
+        <!-- CLASSPATH + path to the junit and hamcrest jar files -->
+            <classpath refid="classpath.test"/>
+            <formatter type="xml"/>
+            <batchtest todir="${classpath}">
+                <fileset dir="${src}" includes="**/Test*.java"/>
+            </batchtest>
+        </junit>
+    </target>
+
+    <target name="build" depends="compile"
+        description="Create the jar file">
+    <!-- Generate javadoc for the project -->
+        <delete dir="${doc}"/>
+        <mkdir dir="${doc}"/>
+        <javadoc destdir="${doc}" charset="UTF8" access="private" author="true">
+            <fileset dir="${src}" excludes="**/Test*.java"/>
+        </javadoc>
+        <jar destfile="${build}/${TSTAMP}-build.jar" basedir="${classpath}" excludes="**/*.xml">
+            <manifest>
+            <!-- Specifies where the entry class is located -->
+                <attribute name="Main-Class" value="${mainClass}"/>
+            </manifest>
+        </jar>
+    </target>
+    
+    <target name="clear"
+        description="Purge the project directory (excepts the sources and the workspace)">
+        <delete dir="${classpath}"/>
+        <delete dir="${doc}"/>
+        <delete dir="${build}"/>
+    </target>
+</project>
