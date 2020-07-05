@@ -1,30 +1,40 @@
+import java.util.HashMap;
 import java.util.List;
 
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.SelfUser;
+import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
+// TODO - add custom emotes for 11 to 30 scores
+// TODO - set the permissions
+// TODO - save prefix and permissions
 public class EventManager extends ListenerAdapter {
 
     private SelfUser bot;
-    private char pref;
+    private HashMap<Guild, ServerSettings> guildsSets;
 
     public EventManager(){
-        this.pref = '-';
+        this.bot = null;
+        this.guildsSets = null;
     }
 
-    @Override
+    public void onGuildJoin(GuildJoinEvent event){
+        this.guildsSets.put(event.getGuild(), new ServerSettings(event.getGuild()));
+    }
+
     public void onMessageReceived(MessageReceivedEvent event){
         Message msg = event.getMessage();
         String msgTxt = msg.getContentRaw();
         if(!msg.getAuthor().isBot()){
             String[] args = msgTxt.split(" ");
-            if(args[0].equals(this.pref+"moy")){
+            if(args[0].equals(this.guildsSets.get(event.getGuild()).getPrefix()+"moy")){
                 args = msgTxt.split("\"");
                 MessageChannel chann = event.getChannel();
                 if(args.length == 3){
@@ -47,14 +57,17 @@ public class EventManager extends ListenerAdapter {
                         chann.sendMessage(args[1]).append("\nMoyenne : ?").queue();
                     }
                 } else{
-                    chann.sendMessage("Commande incorrecte\n"+this.pref+"moy \"MESSAGE\" NOTE_MAX").queue();
+                    chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"moy \"MESSAGE\" NOTE_MAX").queue();
                 }
-            } else if(args[0].equals(this.pref+"prefix")){
+            } else if(args[0].equals(this.guildsSets.get(event.getGuild()).getPrefix()+"prefix")){
                 MessageChannel chann = event.getChannel();
                 if(args.length == 2 && args[1].length() == 1){
-                    this.pref = args[1].charAt(0);
+                    char oldPref = this.guildsSets.get(event.getGuild()).getPrefix();
+                    char newPref = args[1].charAt(0);
+                    this.guildsSets.get(event.getGuild()).setPrefix(newPref);
+                    chann.sendMessage("Le préfixe des commandes a été changé de \""+oldPref+"\" à \""+newPref+"\"").queue();
                 } else{
-                    chann.sendMessage("Commande incorrecte\n"+this.pref+"prefix CARACTERE").queue();
+                    chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"prefix CARACTERE").queue();
                 }
             }
         }
@@ -115,6 +128,10 @@ public class EventManager extends ListenerAdapter {
     public void setUser(SelfUser user){
         if(user != null){
             this.bot = user;
+            this.guildsSets = new HashMap<Guild, ServerSettings>();
+            for(Guild guild : this.bot.getJDA().getGuilds()){
+                this.guildsSets.put(guild, new ServerSettings(guild));
+            }
         }
     }
 }
