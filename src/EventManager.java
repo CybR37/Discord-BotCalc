@@ -12,6 +12,11 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 public class EventManager extends ListenerAdapter {
 
     private SelfUser bot;
+    private char pref;
+
+    public EventManager(){
+        this.pref = '-';
+    }
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event){
@@ -19,7 +24,7 @@ public class EventManager extends ListenerAdapter {
         String msgTxt = msg.getContentRaw();
         if(!msg.getAuthor().isBot()){
             String[] args = msgTxt.split(" ");
-            if(args[0].equals("-moy")){
+            if(args[0].equals(this.pref+"moy")){
                 args = msgTxt.split("\"");
                 MessageChannel chann = event.getChannel();
                 if(args.length == 3){
@@ -42,7 +47,14 @@ public class EventManager extends ListenerAdapter {
                         chann.sendMessage(args[1]).append("\nMoyenne : ?").queue();
                     }
                 } else{
-                    chann.sendMessage("Commande incorrecte\n-moy \"MESSAGE\" NOTE_MAX").queue();
+                    chann.sendMessage("Commande incorrecte\n"+this.pref+"moy \"MESSAGE\" NOTE_MAX").queue();
+                }
+            } else if(args[0].equals(this.pref+"prefix")){
+                MessageChannel chann = event.getChannel();
+                if(args.length == 2 && args[1].length() == 1){
+                    this.pref = args[1].charAt(0);
+                } else{
+                    chann.sendMessage("Commande incorrecte\n"+this.pref+"prefix CARACTERE").queue();
                 }
             }
         }
