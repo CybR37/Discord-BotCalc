@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.entities.MessageReaction;
+import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 // TODO - add custom emotes for 11 to 30 scores
@@ -30,51 +31,116 @@ public class EventManager extends ListenerAdapter {
     }
 
     public void onMessageReceived(MessageReceivedEvent event){
-        Message msg = event.getMessage();
-        String msgTxt = msg.getContentRaw();
-        if(!msg.getAuthor().isBot()){
-            String[] args = msgTxt.split(" ");
-            if(args[0].equals(this.guildsSets.get(event.getGuild()).getPrefix()+"moy")){
-                args = msgTxt.split("\"");
+        if(event.isFromGuild()){
+            Message msg = event.getMessage();
+            String msgTxt = msg.getContentRaw();
+            if(!msg.getAuthor().isBot()){
+                String[] args = msgTxt.split(" ");
                 MessageChannel chann = event.getChannel();
-                if(args.length == 3){
-                    try {
-                        // Used to test if the second arg is a number
-                        int maxScore = Integer.parseInt(args[2].trim());
+                if(args[0].equals(this.guildsSets.get(event.getGuild()).getPrefix()+"moy")){
+                    args = msgTxt.split("\"");
+                    if(args.length == 3){
+                        try {
+                            // Used to test if the second arg is a number
+                            int maxScore = Integer.parseInt(args[2].trim());
 
-                        chann.sendMessage(args[1]).append("\nMoyenne : 0/"+maxScore)
-                        .queue(message -> {if(maxScore <= 10){
-                                                for(int i=0; i < maxScore; i++){
-                                                    message.addReaction("U+003"+String.valueOf(i)+" U+FE0F U+20E3").queue();
-                                                }
-                                                if(maxScore == 10){
-                                                    message.addReaction("U+1F51F").queue();
-                                                } else{
-                                                    message.addReaction("U+003"+maxScore+" U+FE0F U+20E3").queue();
-                                                }
-                                            }});
-                    } catch (NumberFormatException e) {
-                        chann.sendMessage(args[1]).append("\nMoyenne : ?").queue();
+                            chann.sendMessage(args[1]).append("\nMoyenne : 0/"+maxScore)
+                            .queue(message -> {if(maxScore <= 10){
+                                                    for(int i=0; i < maxScore; i++){
+                                                        message.addReaction("U+003"+String.valueOf(i)+" U+FE0F U+20E3").queue();
+                                                    }
+                                                    if(maxScore == 10){
+                                                        message.addReaction("U+1F51F").queue();
+                                                    } else{
+                                                        message.addReaction("U+003"+maxScore+" U+FE0F U+20E3").queue();
+                                                    }
+                                                }});
+                        } catch (NumberFormatException e) {
+                            chann.sendMessage(args[1]).append("\nMoyenne : ?").queue();
+                        }
+                    } else{
+                        chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"moy \"MESSAGE\" NOTE_MAX").queue();
                     }
-                } else{
-                    chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"moy \"MESSAGE\" NOTE_MAX").queue();
-                }
-            } else if(args[0].equals(this.guildsSets.get(event.getGuild()).getPrefix()+"prefix")){
-                MessageChannel chann = event.getChannel();
-                if(args.length == 2 && args[1].length() == 1){
-                    char oldPref = this.guildsSets.get(event.getGuild()).getPrefix();
-                    char newPref = args[1].charAt(0);
-                    this.guildsSets.get(event.getGuild()).setPrefix(newPref);
-                    chann.sendMessage("Le préfixe des commandes a été changé de \""+oldPref+"\" à \""+newPref+"\"").queue();
-                } else{
-                    chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"prefix CARACTERE").queue();
+                } else if(args[0].equals(this.guildsSets.get(event.getGuild()).getPrefix()+"prefix")){
+                    if(args.length == 2 && args[1].length() == 1){
+                        char oldPref = this.guildsSets.get(event.getGuild()).getPrefix();
+                        char newPref = args[1].charAt(0);
+                        this.guildsSets.get(event.getGuild()).setPrefix(newPref);
+                        chann.sendMessage("Le préfixe des commandes a été changé de \""+oldPref+"\" à \""+newPref+"\"").queue();
+                    } else{
+                        chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"prefix CARACTERE").queue();
+                    }
+                } else if(args[0].equals(this.guildsSets.get(event.getGuild()).getPrefix()+"perms")){
+                    this.guildsSets.get(event.getGuild()).refresh();
+                    if(args.length == 1){
+                        String listPerms = "";
+                        String rName;
+                        for(Role r : event.getGuild().getRoles()){
+                            if(!r.isManaged()){
+                                rName = r.getName();
+                                if(rName.length() > 1 && rName.charAt(0) == '@'){
+                                    rName = rName.substring(1);
+                                }
+                                listPerms = listPerms + "• "+rName+"\n";
+                                if(this.guildsSets.get(event.getGuild()).getReactPermission(r) == Permissions.ALLOWED){
+                                    listPerms = listPerms + "React : \u2705\n";
+                                } else{
+                                    listPerms = listPerms + "React : \u274C\n";
+                                }
+                                if(this.guildsSets.get(event.getGuild()).getPollPermission(r) == Permissions.ALLOWED){
+                                    listPerms = listPerms + "Poll : \u2705\n";
+                                } else{
+                                    listPerms = listPerms + "Poll : \u274C\n";
+                                }
+                            }
+                        }
+                        chann.sendMessage(listPerms).queue();
+                    } else if(args.length >= 4){
+                        List<Role> mRoles = msg.getMentionedRoles();
+                        try{
+                            Permissions newPerm = Permissions.valueOf(args[args.length-1]);
+                            // Set perms for everyone role if mentioned
+                            if(msg.mentionsEveryone()){
+                                List<Role> serverRoles = event.getGuild().getRoles();
+                                boolean found = false;
+                                int i = 0;
+                                while(i < serverRoles.size() && !found){
+                                    if(serverRoles.get(i).isPublicRole()){
+                                        found = true;
+                                        if(args[1].equals("poll")){
+                                            this.guildsSets.get(event.getGuild()).setPollPermission(serverRoles.get(i), newPerm);
+                                        } else if(args[1].equals("react")){
+                                            this.guildsSets.get(event.getGuild()).setReactPermission(serverRoles.get(i), newPerm);
+                                        }
+                                    }
+                                    i++;
+                                }
+                            }
+                            if(args[1].equals("poll")){
+                                for(Role r : mRoles){
+                                    this.guildsSets.get(event.getGuild()).setPollPermission(r, newPerm);
+                                }
+                            } else if(args[1].equals("react")){
+                                for(Role r : mRoles){
+                                    this.guildsSets.get(event.getGuild()).setReactPermission(r, newPerm);
+                                }
+                            } else{
+                                chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"perms [react|poll role [roles additionnels...] ALLOWED|DENIED]").queue();
+                            }
+                            chann.sendMessage("Les nouvelles permissions sont appliquées").queue();
+                        } catch(IllegalArgumentException e){
+                            chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"perms [react|poll role [roles additionnels...] ALLOWED|DENIED]").queue();
+                        }
+                    } else{
+                        chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"perms [react|poll role [roles additionnels...] ALLOWED|DENIED]").queue();
+                    }
                 }
             }
         }
     }
 
 
-    public void buildEmbedMoyMessage(String text, int maxScore){
+    public void buildEmbedMoyMessage(String title, String text, String footer){
         
     }
 

@@ -1,26 +1,46 @@
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
 
 public class ServerSettings implements Serializable {
     private static final long serialVersionUID = 1;
+    private Guild server;
     private char prefix;
     private HashMap<Role, Permissions> newPollPerms;
     private HashMap<Role, Permissions> reactPerms;
 
     public ServerSettings(Guild server){
         if(server != null){
+            this.server = server;
             this.prefix = '-';
             this.newPollPerms = new HashMap<Role, Permissions>();
             this.reactPerms = new HashMap<Role, Permissions>();
-            for(Role role : server.getRoles()){
+            this.refresh();            
+        } else{
+            System.out.println("Erreur ServerSettings(): parametre non valide");
+        }
+    }
+
+    public void refresh(){
+        Set<Role> listedRoles = this.newPollPerms.keySet();
+        // Adds the new roles
+        for(Role role : this.server.getRoles()){
+            if(!listedRoles.contains(role)){
                 this.newPollPerms.put(role, Permissions.ALLOWED);
                 this.reactPerms.put(role, Permissions.ALLOWED);
             }
-        } else{
-            System.out.println("Erreur ServerSettings(): parametre non valide");
+        }
+        List<Role> serverRoles = this.server.getRoles();
+        // Remove the old roles
+        for(Role role : this.newPollPerms.keySet()){
+            if(!serverRoles.contains(role)){
+                this.newPollPerms.remove(role);
+                this.reactPerms.remove(role);
+            }
         }
     }
 
