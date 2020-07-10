@@ -1,7 +1,5 @@
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
 
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
@@ -21,36 +19,30 @@ public class ServerSettings implements Serializable {
             this.newPollPerms = new HashMap<Role, Permissions>();
             this.reactPerms = new HashMap<Role, Permissions>();
             this.prefixPerms = new HashMap<Role, Permissions>();
-            this.refresh();            
+            for (Role r : this.server.getRoles()){
+                this.addRole(r);
+            }
         } else{
             System.out.println("Erreur ServerSettings(): parametre non valide");
         }
     }
 
-    public void refresh(){
-        Set<Role> listedRoles = this.newPollPerms.keySet();
-        // Adds the new roles
-        for(Role role : this.server.getRoles()){
-            if(!listedRoles.contains(role)){
-                if(role.isPublicRole()){
-                    this.newPollPerms.put(role, Permissions.ALLOWED);
-                    this.reactPerms.put(role, Permissions.ALLOWED);
-                    this.prefixPerms.put(role, Permissions.ALLOWED);
-                } else{
-                    this.newPollPerms.put(role, Permissions.DENIED);
-                    this.reactPerms.put(role, Permissions.DENIED);
-                    this.prefixPerms.put(role, Permissions.DENIED);
-                }
-            }
+    public void addRole(Role r){
+        if(r.isPublicRole()){
+            this.newPollPerms.put(r, Permissions.ALLOWED);
+            this.reactPerms.put(r, Permissions.ALLOWED);
+            this.prefixPerms.put(r, Permissions.ALLOWED);
+        } else{
+            this.newPollPerms.put(r, Permissions.DENIED);
+            this.reactPerms.put(r, Permissions.DENIED);
+            this.prefixPerms.put(r, Permissions.DENIED);
         }
-        List<Role> serverRoles = this.server.getRoles();
-        // Remove the old roles
-        for(Role role : this.newPollPerms.keySet()){
-            if(!serverRoles.contains(role)){
-                this.newPollPerms.remove(role);
-                this.reactPerms.remove(role);
-            }
-        }
+    }
+
+    public void removeRole(Role r){
+        this.newPollPerms.remove(r);
+        this.reactPerms.remove(r);
+        this.prefixPerms.remove(r);
     }
 
     public char getPrefix(){

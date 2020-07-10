@@ -2,12 +2,14 @@ import java.util.HashMap;
 import java.util.List;
 
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Emote;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.SelfUser;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
+import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
@@ -18,8 +20,8 @@ import net.dv8tion.jda.api.entities.PrivateChannel;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.RestAction;
+import net.dv8tion.jda.api.requests.restaction.MessageAction;
 
-// TODO - add custom emotes for 11 to 30 scores
 // TODO - save prefix and permissions
 public class EventManager extends ListenerAdapter {
 
@@ -33,6 +35,10 @@ public class EventManager extends ListenerAdapter {
 
     public void onGuildJoin(GuildJoinEvent event){
         this.guildsSets.put(event.getGuild(), new ServerSettings(event.getGuild()));
+    }
+
+    public void onGuildLeave(GuildLeaveEvent event){
+        this.guildsSets.remove(event.getGuild());
     }
 
     public void onGuildMessageReceived(GuildMessageReceivedEvent event){
@@ -49,18 +55,69 @@ public class EventManager extends ListenerAdapter {
                         try {
                             // Used to test if the second arg is a number
                             int maxScore = Integer.parseInt(args[2].trim());
-
-                            chann.sendMessage(args[1]).append("\nMoyenne : 0/"+maxScore)
-                            .queue(message -> {if(maxScore <= 10){
-                                                    for(int i=0; i < maxScore; i++){
-                                                        message.addReaction("U+003"+String.valueOf(i)+" U+FE0F U+20E3").queue();
-                                                    }
-                                                    if(maxScore == 10){
-                                                        message.addReaction("U+1F51F").queue();
-                                                    } else{
-                                                        message.addReaction("U+003"+maxScore+" U+FE0F U+20E3").queue();
-                                                    }
-                                                }});
+                            if(maxScore <= 20){
+                                List<Emote> serverEmotes = event.getGuild().getEmotes();
+                                String txtEmote = null;
+                                String[] unicodeList = {"🤏", "✌️", "🤞", "🤙", "👈", "👉", "👆", "👇", "👍", "👏"};
+                                MessageAction sentMsg = chann.sendMessage(args[1]).append("\nMoyenne : 0/"+maxScore);
+                                if(maxScore > 10){
+                                    sentMsg.append("\n(");
+                                    if(serverEmotes.size() >= maxScore-10){
+                                        for(int i=0; i < maxScore-10; i++){
+                                            txtEmote = (i+11)+" -> "+serverEmotes.get(i).getAsMention();
+                                            if(i == 0){
+                                                sentMsg.append(txtEmote);
+                                            } else{
+                                                sentMsg.append(", "+txtEmote);
+                                            }
+                                        }
+                                    } else{
+                                        for(int i=0; i < maxScore-10; i++){
+                                            txtEmote = (i+11)+" -> "+unicodeList[i];
+                                            if(i == 0){
+                                                sentMsg.append(txtEmote);
+                                            } else{
+                                                sentMsg.append(", "+txtEmote);
+                                            }
+                                        }
+                                    }
+                                    sentMsg.append(")");
+                                }
+                                sentMsg.queue(message -> {if(maxScore <= 10){
+                                                            for(int i=0; i < maxScore; i++){
+                                                                message.addReaction("U+003"+String.valueOf(i)+" U+FE0F U+20E3").queue();
+                                                            }
+                                                            if(maxScore == 10){
+                                                                message.addReaction("U+1F51F").queue();
+                                                            } else{
+                                                                message.addReaction("U+003"+maxScore+" U+FE0F U+20E3").queue();
+                                                            }
+                                                        } else{
+                                                            // Add 0 emoji as reaction
+                                                            if(maxScore < 20){
+                                                                message.addReaction("U+0030 U+FE0F U+20E3").queue();
+                                                            }
+                                                            // Add 1-9 emoji as reaction
+                                                            for(int j=1; j < 10; j++){
+                                                                message.addReaction("U+003"+String.valueOf(j)+" U+FE0F U+20E3").queue();
+                                                            }
+                                                            // Add 10 emoji as reaction
+                                                            message.addReaction("U+1F51F").queue();
+                                                            List<Emote> messageEmotes = message.getEmotes();
+                                                            // 11-maxScore (limited to 20) emoji as reaction
+                                                            if(messageEmotes.size() == 0){
+                                                                for(int i=0; i < maxScore-10; i++){
+                                                                    message.addReaction(unicodeList[i]).queue();
+                                                                }
+                                                            } else{
+                                                                for(Emote emo : messageEmotes){
+                                                                    message.addReaction(emo).queue();
+                                                                }
+                                                            }
+                                                        }});
+                            } else{
+                                chann.sendMessage("La note maximale ne peut dépasser 20").queue();
+                            }
                         } catch (NumberFormatException e) {
                             chann.sendMessage(args[1]).append("\nMoyenne : ?").queue();
                         }
@@ -179,7 +236,8 @@ public class EventManager extends ListenerAdapter {
             if(message.getAuthor().equals(this.bot)){
                 Member user = event.getMember();
                 if(this.hasReactPerms(event.getGuild(), user.getRoles())){
-                    int maxScore = Integer.parseInt(message.getContentRaw().split("/")[1]);
+                    String[] lines = message.getContentRaw().split("\n");
+                    int maxScore = Integer.parseInt(lines[1].split("/")[1]);
                     double sumScore = 0;
                     int nbMarks = 0;
                     double avg = 0;
@@ -189,12 +247,20 @@ public class EventManager extends ListenerAdapter {
                             sumScore = sumScore + (i*(l.get(i).getCount()-1));
                             nbMarks = nbMarks + l.get(i).getCount()-1;
                         }
-                        if(nbMarks > 0){
-                            avg = sumScore/nbMarks;
+                    } else if(l.size() >= maxScore && maxScore == 20){
+                        for(int i=0; i < maxScore; i++){
+                            sumScore = sumScore + ((i+1)*(l.get(i).getCount()-1));
+                            nbMarks = nbMarks + l.get(i).getCount()-1;
                         }
                     }
-                    String txt = message.getContentRaw().split("\n")[0];
-                    message.editMessage(txt+"\nMoyenne : "+avg+"/"+maxScore).queue();
+                    if(nbMarks > 0){
+                        avg = sumScore/nbMarks;
+                    }
+                    if(lines.length > 2){
+                        message.editMessage(lines[0]+"\nMoyenne : "+avg+"/"+maxScore+"\n"+lines[2]).queue();
+                    } else{
+                        message.editMessage(lines[0]+"\nMoyenne : "+avg+"/"+maxScore).queue();
+                    }
                 } else{
                     RestAction<PrivateChannel> privchann = user.getUser().openPrivateChannel();
                     privchann.queue(privChann -> privChann.sendMessage("Vous n'avez pas la permission de poster une réaction au message se trouvant dans \""+event.getGuild().getName()+"\"").queue());
@@ -207,7 +273,8 @@ public class EventManager extends ListenerAdapter {
     public void onMessageReactionRemove(MessageReactionRemoveEvent event){
         event.retrieveMessage().queue(message -> {
             if(message.getAuthor().equals(this.bot)){
-                int maxScore = Integer.parseInt(message.getContentRaw().split("/")[1]);
+                String[] lines = message.getContentRaw().split("\n");
+                int maxScore = Integer.parseInt(lines[1].split("/")[1]);
                 double sumScore = 0;
                 int nbMarks = 0;
                 double avg = 0;
@@ -217,22 +284,30 @@ public class EventManager extends ListenerAdapter {
                         sumScore = sumScore + (i*(l.get(i).getCount()-1));
                         nbMarks = nbMarks + l.get(i).getCount()-1;
                     }
-                    if(nbMarks > 0){
-                        avg = sumScore/nbMarks;
+                } else if(l.size() >= maxScore && maxScore == 20){
+                    for(int i=0; i < maxScore; i++){
+                        sumScore = sumScore + ((i+1)*(l.get(i).getCount()-1));
+                        nbMarks = nbMarks + l.get(i).getCount()-1;
                     }
                 }
-                String txt = message.getContentRaw().split("\n")[0];
-                message.editMessage(txt+"\nMoyenne : "+avg+"/"+maxScore).queue();
+                if(nbMarks > 0){
+                    avg = sumScore/nbMarks;
+                }
+                if(lines.length > 2){
+                    message.editMessage(lines[0]+"\nMoyenne : "+avg+"/"+maxScore+"\n"+lines[2]).queue();
+                } else{
+                    message.editMessage(lines[0]+"\nMoyenne : "+avg+"/"+maxScore).queue();
+                }
             }
         });
     }
 
     public void onRoleCreate(RoleCreateEvent event){
-        this.guildsSets.get(event.getGuild()).refresh();
+        this.guildsSets.get(event.getGuild()).addRole(event.getRole());
     }
 
     public void onRoleDelete(RoleDeleteEvent event){
-        this.guildsSets.get(event.getGuild()).refresh();
+        this.guildsSets.get(event.getGuild()).removeRole(event.getRole());
     }
 
     public boolean hasPollPerms(Guild g, List<Role> r){
