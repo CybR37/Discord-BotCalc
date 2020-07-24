@@ -52,7 +52,7 @@ public class EventManager extends ListenerAdapter {
                 if(this.hasPollPerms(event.getGuild(), user.getRoles())){
                     args = msgTxt.split("\"");
                     if(args.length == 3){
-                        try {
+                        try{
                             // Used to test if the second arg is a number
                             int maxScore = Integer.parseInt(args[2].trim());
                             if(maxScore <= 20){
