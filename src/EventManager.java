@@ -68,7 +68,7 @@ public class EventManager extends ListenerAdapter {
                                             if(i == 0){
                                                 sentMsg.append(txtEmote);
                                             } else{
-                                                sentMsg.append(", "+txtEmote);
+                                                sentMsg.append(" | "+txtEmote);
                                             }
                                         }
                                     } else{
@@ -77,7 +77,7 @@ public class EventManager extends ListenerAdapter {
                                             if(i == 0){
                                                 sentMsg.append(txtEmote);
                                             } else{
-                                                sentMsg.append(", "+txtEmote);
+                                                sentMsg.append(" | "+txtEmote);
                                             }
                                         }
                                     }
@@ -104,13 +104,25 @@ public class EventManager extends ListenerAdapter {
                                                             // Add 10 emoji as reaction
                                                             message.addReaction("U+1F51F").queue();
                                                             List<Emote> messageEmotes = message.getEmotes();
+                                                            Emote[] listEmo = null;
+                                                            if(messageEmotes.size() >= maxScore-10){
+                                                                listEmo = new Emote[maxScore-10];
+                                                                if(messageEmotes.size() > listEmo.length){
+                                                                    // Copy emotes starts from the end to use only emotes of the third line of the message
+                                                                    for(int i=1; i <= listEmo.length; i++){
+                                                                        listEmo[listEmo.length-i] = messageEmotes.get(messageEmotes.size()-i);
+                                                                    }
+                                                                } else{
+                                                                    messageEmotes.toArray(listEmo);
+                                                                }
+                                                            }
                                                             // 11-maxScore (limited to 20) emoji as reaction
-                                                            if(messageEmotes.size() == 0){
+                                                            if(listEmo == null){
                                                                 for(int i=0; i < maxScore-10; i++){
                                                                     message.addReaction(unicodeList[i]).queue();
                                                                 }
                                                             } else{
-                                                                for(Emote emo : messageEmotes){
+                                                                for(Emote emo : listEmo){
                                                                     message.addReaction(emo).queue();
                                                                 }
                                                             }
