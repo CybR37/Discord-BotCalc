@@ -68,7 +68,7 @@ public class EventManager extends ListenerAdapter {
                                             if(i == 0){
                                                 sentMsg.append(txtEmote);
                                             } else{
-                                                sentMsg.append(", "+txtEmote);
+                                                sentMsg.append(" | "+txtEmote);
                                             }
                                         }
                                     } else{
@@ -77,7 +77,7 @@ public class EventManager extends ListenerAdapter {
                                             if(i == 0){
                                                 sentMsg.append(txtEmote);
                                             } else{
-                                                sentMsg.append(", "+txtEmote);
+                                                sentMsg.append(" | "+txtEmote);
                                             }
                                         }
                                     }
@@ -104,8 +104,12 @@ public class EventManager extends ListenerAdapter {
                                                             // Add 10 emoji as reaction
                                                             message.addReaction("U+1F51F").queue();
                                                             List<Emote> messageEmotes = message.getEmotes();
+                                                            if(messageEmotes.size() > maxScore-10){
+                                                                // Keep only marks emotes
+                                                                messageEmotes = messageEmotes.subList(messageEmotes.size()-(maxScore-10), messageEmotes.size());
+                                                            }
                                                             // 11-maxScore (limited to 20) emoji as reaction
-                                                            if(messageEmotes.size() == 0){
+                                                            if(messageEmotes.size() != maxScore-10){
                                                                 for(int i=0; i < maxScore-10; i++){
                                                                     message.addReaction(unicodeList[i]).queue();
                                                                 }
