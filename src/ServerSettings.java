@@ -1,5 +1,11 @@
+import java.io.DataOutputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Set;
 
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
@@ -14,8 +20,8 @@ public class ServerSettings implements Serializable {
 
     public ServerSettings(Guild server){
         if(server != null){
-            this.server = server;
             this.prefix = '-';
+            this.server = server;
             this.newPollPerms = new HashMap<Role, Permissions>();
             this.reactPerms = new HashMap<Role, Permissions>();
             this.prefixPerms = new HashMap<Role, Permissions>();
@@ -107,6 +113,46 @@ public class ServerSettings implements Serializable {
             this.prefixPerms.put(role, perm);
         } else{
             System.out.println("Erreur ServerSettings.setPrefixPermission(): parametre non valide");
+        }
+    }
+
+    public void saveSettings(String fileName){
+        File saveFile = new File("sets/"+fileName);
+        saveFile.getParentFile().mkdir();
+        try{
+            DataOutputStream out = new DataOutputStream(new FileOutputStream(saveFile));
+            out.writeChar(this.prefix);
+            Set<Role> listR = this.newPollPerms.keySet();
+            for (Role role : listR) {
+                out.writeLong(role.getIdLong());
+                out.writeUTF(this.newPollPerms.get(role).toString());
+                out.writeUTF(this.reactPerms.get(role).toString());
+                out.writeUTF(this.prefixPerms.get(role).toString());
+            }
+            out.close();
+        } catch(java.io.IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void loadSettings(String fileName){
+        File saveFile = new File("sets/"+fileName);
+        try{
+            DataInputStream in = new DataInputStream(new FileInputStream(saveFile));
+            try{
+                this.prefix = in.readChar();
+                while(true){
+                    long roleId = in.readLong();
+                    this.setPollPermission(this.server.getRoleById(roleId), Permissions.valueOf(in.readUTF()));
+                    this.setReactPermission(this.server.getRoleById(roleId), Permissions.valueOf(in.readUTF()));
+                    this.setPrefixPermission(this.server.getRoleById(roleId), Permissions.valueOf(in.readUTF()));
+                }
+            } catch(java.io.EOFException e){
+            } finally{
+                in.close();
+            }
+        } catch(java.io.IOException e){
+            e.printStackTrace();
         }
     }
 }

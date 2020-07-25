@@ -1,3 +1,4 @@
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 
@@ -34,11 +35,15 @@ public class EventManager extends ListenerAdapter {
     }
 
     public void onGuildJoin(GuildJoinEvent event){
+        File saveFile = new File("sets/"+event.getGuild().getName()+"-"+event.getGuild().getId());
+        saveFile.delete();
         this.guildsSets.put(event.getGuild(), new ServerSettings(event.getGuild()));
     }
 
     public void onGuildLeave(GuildLeaveEvent event){
         this.guildsSets.remove(event.getGuild());
+        File saveFile = new File("sets/"+event.getGuild().getName()+"-"+event.getGuild().getId());
+        saveFile.delete();
     }
 
     public void onGuildMessageReceived(GuildMessageReceivedEvent event){
@@ -137,6 +142,10 @@ public class EventManager extends ListenerAdapter {
                         char oldPref = this.guildsSets.get(event.getGuild()).getPrefix();
                         char newPref = args[1].charAt(0);
                         this.guildsSets.get(event.getGuild()).setPrefix(newPref);
+
+                        // Save the new prefix
+                        this.guildsSets.get(event.getGuild()).saveSettings(event.getGuild().getName()+"-"+event.getGuild().getId());
+                        
                         chann.sendMessage("Le préfixe des commandes a été changé de \""+oldPref+"\" à \""+newPref+"\"").queue();
                     } else{
                         chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"prefix CARACTERE").queue();
@@ -217,6 +226,10 @@ public class EventManager extends ListenerAdapter {
                             } else{
                                 chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"perms [react|poll|prefix role [roles additionnels...] ALLOWED|DENIED]").queue();
                             }
+
+                            // Save the new permissions
+                            this.guildsSets.get(event.getGuild()).saveSettings(event.getGuild().getName()+"-"+event.getGuild().getId());
+
                             chann.sendMessage("Les nouvelles permissions sont appliquées").queue();
                         } catch(IllegalArgumentException e){
                             chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"perms [react|poll|prefix role [roles additionnels...] ALLOWED|DENIED]").queue();
@@ -402,9 +415,16 @@ public class EventManager extends ListenerAdapter {
         if(user != null){
             this.bot = user;
             this.guildsSets = new HashMap<Guild, ServerSettings>();
+            File saveFile;
             for(Guild guild : this.bot.getJDA().getGuilds()){
-                this.guildsSets.put(guild, new ServerSettings(guild));
+                saveFile = new File("sets/"+guild.getName()+"-"+guild.getId());
+                ServerSettings settings = new ServerSettings(guild);
+                if(saveFile.exists()){
+                    settings.loadSettings(guild.getName()+"-"+guild.getId());
+                }
+                this.guildsSets.put(guild, settings);
             }
+
         } else{
             System.out.println("Erreur EventManager.setUser(): parametre non valide");
         }
