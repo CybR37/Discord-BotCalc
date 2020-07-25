@@ -3,15 +3,13 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Set;
 
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
 
-public class ServerSettings implements Serializable {
-    private static final long serialVersionUID = 1;
+public class ServerSettings {
     private Guild server;
     private char prefix;
     private HashMap<Role, Permissions> newPollPerms;
