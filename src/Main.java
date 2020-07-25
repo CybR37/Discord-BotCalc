@@ -15,12 +15,10 @@ public class Main{
         JDA bot = null;
         try{
             bot = builder.build();
-        } catch(LoginException e){
-            System.out.println("Erreur de connexion");
-        }
-        try {
             bot.awaitReady();
             manager.setUser(bot.getSelfUser());
+        } catch(LoginException e){
+            System.out.println("Erreur de connexion");
         } catch (InterruptedException e) {}
     }
 }
