@@ -135,7 +135,7 @@ public class EventManager extends ListenerAdapter {
                 } else{
                     chann.sendMessage(user.getAsMention()+" Vous n'avez pas la permission de créer un sondage").queue();
                 }
-            } else if(args[0].equals(this.guildsSets.get(event.getGuild()).getPrefix()+"prefix")){
+            } else if(args[0].equals(this.guildsSets.get(event.getGuild()).getPrefix()+"prefix") || args[0].equals(this.guildsSets.get(event.getGuild()).getPrefix()+"p")){
                 if(this.hasPrefixPerms(event.getGuild(), user.getRoles())){
                     if(args.length == 2 && args[1].length() == 1){
                         char oldPref = this.guildsSets.get(event.getGuild()).getPrefix();
@@ -147,7 +147,7 @@ public class EventManager extends ListenerAdapter {
                         
                         chann.sendMessage("Le préfixe des commandes a été changé de \""+oldPref+"\" à \""+newPref+"\"").queue();
                     } else{
-                        chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"prefix CARACTERE").queue();
+                        chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"prefix|p CARACTERE").queue();
                     }
                 } else{
                     chann.sendMessage(user.getAsMention()+" Vous n'avez pas la permission de modifier le préfixe des commandes").queue();
@@ -223,7 +223,7 @@ public class EventManager extends ListenerAdapter {
                                     this.guildsSets.get(event.getGuild()).setPrefixPermission(r, newPerm);
                                 }
                             } else{
-                                chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"perms [react|poll|prefix role [roles additionnels...] ALLOWED|DENIED]").queue();
+                                chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"perms [react|poll|prefix rôle [rôles additionnels...] ALLOWED|DENIED]").queue();
                             }
 
                             // Save the new permissions
@@ -231,14 +231,22 @@ public class EventManager extends ListenerAdapter {
 
                             chann.sendMessage("Les nouvelles permissions sont appliquées").queue();
                         } catch(IllegalArgumentException e){
-                            chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"perms [react|poll|prefix role [roles additionnels...] ALLOWED|DENIED]").queue();
+                            chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"perms [react|poll|prefix rôle [rôles additionnels...] ALLOWED|DENIED]").queue();
                         }
                     } else{
                         chann.sendMessage(user.getAsMention()+" Vous n'avez pas la permission de modifier les permissions :upside_down:").queue();
                     }
                 } else{
-                    chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"perms [react|poll|prefix role [roles additionnels...] ALLOWED|DENIED]").queue();
+                    chann.sendMessage("Commande incorrecte\n"+this.guildsSets.get(event.getGuild()).getPrefix()+"perms [react|poll|prefix rôle [rôles additionnels...] ALLOWED|DENIED]").queue();
                 }
+            } else if(args[0].equals(this.guildsSets.get(event.getGuild()).getPrefix()+"help")){
+                chann.sendMessage("Commandes : ")
+                .append("\n • "+this.guildsSets.get(event.getGuild()).getPrefix()+"help : Affiche l'aide")
+                .append("\n • "+this.guildsSets.get(event.getGuild()).getPrefix()+"moy \"TEXTE\" SCORE_MAX : Crée un nouveau sondage (poll) selon les paramètres donnés (texte du sondage et score max possible)")
+                .append("\n • "+this.guildsSets.get(event.getGuild()).getPrefix()+"prefix|p CARACTERE : Change le préfixe utilisé dans les commandes")
+                .append("\n • "+this.guildsSets.get(event.getGuild()).getPrefix()+"perms : Affiche les permissions spécifiques au bot pour chaque rôle")
+                .append("\n • "+this.guildsSets.get(event.getGuild()).getPrefix()+"perms react|poll|prefix rôle [rôles additionnels...] ALLOWED|DENIED : Change le status des permissions pour le(s) rôle(s) voulu(s)")
+                .queue();
             }
         }
     }
