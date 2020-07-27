@@ -10,11 +10,10 @@ public class Main{
     public static void main(String[] args) {
         manager = new EventManager();
         JDABuilder builder = JDABuilder.createDefault("");
-        builder.setActivity(Activity.watching("Deep learning videos"));
+        builder.setActivity(Activity.watching("Deep learning videos (-help)"));
         builder.addEventListeners(manager);
-        JDA bot = null;
         try{
-            bot = builder.build();
+            JDA bot = builder.build();
             bot.awaitReady();
             manager.setUser(bot.getSelfUser());
         } catch(LoginException e){
