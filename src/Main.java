@@ -10,7 +10,7 @@ public class Main{
     public static void main(String[] args) {
         manager = new EventManager();
         JDABuilder builder = JDABuilder.createDefault("");
-        builder.setActivity(Activity.watching("Deep learning videos"));
+        builder.setActivity(Activity.watching("Deep learning videos (-help)"));
         builder.addEventListeners(manager);
         try{
             JDA bot = builder.build();
